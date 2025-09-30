@@ -46,13 +46,6 @@ class csp():
             
             self.constraints[var] = constraint
     
-    #removes posible value from domain if a constraining value is assigned
-    #doesnt seem to effect performance much
-    def removeDomainVal(self, var, val):
-        for var1 in self.constraints[var]:
-            try: self.domains[var1].remove(val)
-            except ValueError: continue
-    
     #select next variable that has not been given an asignment yet
     def selectUnasignedVar(self, assignment):
         unassignedVar = []
@@ -99,8 +92,6 @@ class csp():
         #gets first val that corforms to constraints else returns fail(None) as we want to return a complete puzzel not a success or fail
         for val in self.orderDomainValues(var):
             if self.isConsistent(var, val, assignment):
-                #removes domain value for all variables in constraint list
-                self.removeDomainVal(var, val)
                 assignment[var] = val
                 result = self.recursiveBacktrack(assignment)
                 if result is not None:
@@ -138,15 +129,26 @@ def printSudoku(puzzle):
 
 def main():
     #create csp object, passing initial state 
-    problem = csp([[7,0,0,0,9,2,0,5,0],
-                   [0,3,0,1,7,5,6,0,0],
-                   [9,0,1,8,4,0,2,7,0],
-                   [3,7,0,0,5,0,0,1,0],
-                   [5,4,0,9,0,0,7,3,6],
-                   [0,6,0,0,0,0,0,0,5],
-                   [6,2,0,7,0,9,0,4,8],
-                   [8,1,0,0,0,0,9,0,0],
-                   [0,0,7,2,0,0,5,0,1]])
+
+    #problem = csp([[7,0,0,0,9,2,0,5,0],
+    #            [0,3,0,1,7,5,6,0,0],
+    #            [9,0,1,8,4,0,2,7,0],
+    #            [3,7,0,0,5,0,0,1,0],
+    #            [5,4,0,9,0,0,7,3,6],
+    #            [0,6,0,0,0,0,0,0,5],
+    #            [6,2,0,7,0,9,0,4,8],
+    #            [8,1,0,0,0,0,9,0,0],
+    #            [0,0,7,2,0,0,5,0,1]])
+        
+    problem = csp([[0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0]])
 
     startT = time.perf_counter_ns()
 
