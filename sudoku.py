@@ -1,6 +1,8 @@
 
 #sudoku is 9x9 grid of int (0=empty)
 import time
+import tkinter as tk
+import tkinter.font as tkFont
 
 
 class csp():
@@ -19,6 +21,49 @@ class csp():
         self.variables = [(i,j) for i in range(9) for j in range(9)]
         self.domains = self.makeDomains(variables)
         self.constraints = self.makeConstraints(self.variables)
+        self.cells = [[0]*9 for _ in range(9)]
+        self.gui = self.createGui() 
+
+    def createGui(self):
+        root = tk.Tk()
+        root.resizable(False, False)
+        root.title("Sudoku Solver")
+        mainWindow = tk.Frame(root, height=100, width=100, bg=hexFromRgb(50,50,50))
+        mainWindow.grid(column=0,row=0)
+
+        titleFont = tkFont.Font(family="Comic Sans", size=20, weight="bold")
+        title = tk.Label(mainWindow, text="Sudoku Solver", bg=hexFromRgb(50,50,50), height=2, width=15, font=titleFont, foreground="White")
+        title.grid(column=1, row=0, columnspan=3)
+
+        sudokuFrame = tk.Frame(mainWindow, bg=hexFromRgb(50,50,50))
+        sudokuFrame.grid(column=1, row=1)
+
+        cellFont = tkFont.Font(family="Comic Sans", size=12,weight="bold")
+        for i in range(9):
+            for j in range(9):
+                self.cells[i][j] = tk.Label(sudokuFrame, bg=hexFromRgb(120,120,120), width=5, height= 2, foreground="white", font=cellFont)
+                
+                if len(self.domains[i,j]) ==1:
+                    self.cells[i][j].config(text=(f"{self.domains[i,j][0]}"), bg=hexFromRgb(100,100,100))
+
+                self.cells[i][j].grid(row=i, column=j, padx=1, pady=1)
+
+        
+        solveButton = tk.Button(mainWindow, bg="white", relief="groove", text="Solve Puzzle", height=2, width=12, command=self.showSolve)
+        solveButton.grid(row=3, column=1, columnspan=3)
+
+        return root
+
+    def showSolve(self):
+        solution = self.backtrackSearch()
+
+        for (i,j), val in solution.items():
+            self.cells[i][j].config(text=val)
+
+    
+    def showGui(self):
+        self.gui.mainloop()
+
     
     def printCalls(self):
         for k,v in self.calls.items():
@@ -136,6 +181,9 @@ def getPuzzle():
     
     return temp
 
+def hexFromRgb(r,g,b):
+    return f'#{r:02x}{g:02x}{b:02x}'
+
 #print the solution in a nice format
 def printSudoku(puzzle):
     for i in range(9):
@@ -151,15 +199,15 @@ def printSudoku(puzzle):
 def main():
     #create csp object, passing initial state 
 
-    problem = csp([[7,0,0,0,9,2,0,5,0],
-               [0,3,0,1,7,5,6,0,0],
-               [9,0,1,8,4,0,2,7,0],
-               [3,7,0,0,5,0,0,1,0],
-               [5,4,0,9,0,0,7,3,6],
-               [0,6,0,0,0,0,0,0,5],
-               [6,2,0,7,0,9,0,4,8],
-               [8,1,0,0,0,0,9,0,0],
-               [0,0,7,2,0,0,5,0,1]])
+    # problem = csp([[7,0,0,0,9,2,0,5,0],
+    #            [0,3,0,1,7,5,6,0,0],
+    #            [9,0,1,8,4,0,2,7,0],
+    #            [3,7,0,0,5,0,0,1,0],
+    #            [5,4,0,9,0,0,7,3,6],
+    #            [0,6,0,0,0,0,0,0,5],
+    #            [6,2,0,7,0,9,0,4,8],
+    #            [8,1,0,0,0,0,9,0,0],
+    #            [0,0,7,2,0,0,5,0,1]])
         
     # problem = csp([[0,0,0,0,0,0,0,0,0],
     #                [0,0,0,0,0,0,0,0,0],
@@ -171,18 +219,18 @@ def main():
     #                [0,0,0,0,0,0,0,0,0],
     #                [0,0,0,0,0,0,0,0,0]])
 
-    #hard from telegram
-    # problem = csp([
-    #     [7,0,0,8,0,0,4,0,1],
-    #     [0,0,9,0,5,0,0,0,0],
-    #     [0,0,0,0,0,0,0,9,0],
-    #     [0,0,0,0,2,0,3,0,0],
-    #     [0,1,0,4,0,0,0,6,0],
-    #     [6,4,0,0,7,8,0,0,0],
-    #     [0,0,0,0,0,0,0,5,0],
-    #     [0,3,0,2,0,7,8,0,0],
-    #     [0,8,0,0,0,0,2,0,0]
-    # ])
+    # hard from telegram
+    problem = csp([
+        [7,0,0,8,0,0,4,0,1],
+        [0,0,9,0,5,0,0,0,0],
+        [0,0,0,0,0,0,0,9,0],
+        [0,0,0,0,2,0,3,0,0],
+        [0,1,0,4,0,0,0,6,0],
+        [6,4,0,0,7,8,0,0,0],
+        [0,0,0,0,0,0,0,5,0],
+        [0,3,0,2,0,7,8,0,0],
+        [0,8,0,0,0,0,2,0,0]
+    ])
 
     startT = time.perf_counter_ns()
 
@@ -203,6 +251,8 @@ def main():
 
     print(f"runtime (ms): {runtime}")
     problem.printCalls()
+
+    problem.showGui()
 
 
 main()
