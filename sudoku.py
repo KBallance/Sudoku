@@ -21,10 +21,19 @@ class csp():
         self.variables = [(i,j) for i in range(9) for j in range(9)]
         self.domains = self.makeDomains(variables)
         self.constraints = self.makeConstraints(self.variables)
+
         self.cells = [[0]*9 for _ in range(9)]
+        self.cellsStrVar = [[tk.StringVar]*9 for _ in range(9)] #use StringVar to link label text to variable
         self.gui = self.createGui() 
 
     def createGui(self):
+        def genPadding(x):
+            smallGap, bigGap = 0, 1
+            if x == 1:
+                return (bigGap, bigGap)
+            else:
+                return (smallGap, smallGap)
+
         root = tk.Tk()
         root.resizable(False, False)
         root.title("Sudoku Solver")
@@ -35,19 +44,26 @@ class csp():
         title = tk.Label(mainWindow, text="Sudoku Solver", bg=hexFromRgb(50,50,50), height=2, width=15, font=titleFont, foreground="White")
         title.grid(column=1, row=0, columnspan=3)
 
-        sudokuFrame = tk.Frame(mainWindow, bg=hexFromRgb(50,50,50))
+        sudokuFrame = tk.Frame(mainWindow, bg=hexFromRgb(255,255,255))
         sudokuFrame.grid(column=1, row=1)
+
+        subFrames = [[tk.Frame]*3 for _ in range(3)]
+        for x in range(len(subFrames)):
+            for y in range(len(subFrames)):
+                subFrames[x][y] = tk.Frame(sudokuFrame, bg=hexFromRgb(255,255,255))
+                subFrames[x][y].grid(row=x, column=y, padx=genPadding(x), pady=genPadding(y))
 
         cellFont = tkFont.Font(family="Comic Sans", size=12,weight="bold")
         for i in range(9):
             for j in range(9):
-                self.cells[i][j] = tk.Label(sudokuFrame, bg=hexFromRgb(120,120,120), width=5, height= 2, foreground="white", font=cellFont)
+                self.cellsStrVar[i][j] = tk.StringVar(mainWindow)
+                self.cells[i][j] = tk.Label(subFrames[i//3][j//3], bg=hexFromRgb(120,120,120), width=5, height= 2, foreground="white", font=cellFont, textvariable=self.cellsStrVar[i][j])
                 
-                if len(self.domains[i,j]) ==1:
-                    self.cells[i][j].config(text=(f"{self.domains[i,j][0]}"), bg=hexFromRgb(100,100,100))
-
+                if len(self.domains[i,j]) == 1:
+                    self.cells[i][j].config(bg=hexFromRgb(75,75,75))
+                    self.cellsStrVar[i][j].set(f"{self.domains[i,j][0]}")
+                
                 self.cells[i][j].grid(row=i, column=j, padx=1, pady=1)
-
         
         solveButton = tk.Button(mainWindow, bg="white", relief="groove", text="Solve Puzzle", height=2, width=12, command=self.showSolve)
         solveButton.grid(row=3, column=1, columnspan=3)
@@ -58,7 +74,7 @@ class csp():
         solution = self.backtrackSearch()
 
         for (i,j), val in solution.items():
-            self.cells[i][j].config(text=val)
+            self.cellsStrVar[i][j].set(str(val))
 
     
     def showGui(self):
