@@ -4,6 +4,56 @@ import time
 import tkinter as tk
 import tkinter.font as tkFont
 
+#class used to implements a "editable" cell label
+#handles user events to change the values of the cells
+class EditLabel():
+    #initiates helper class
+    def __init__(self, csp):
+       self.currentEdit = None
+       self.cspRef = csp
+       self.valid = {'1','2','3','4','5','6','7','8','9','BackSpace','Return'}
+    
+    #changes the current label being edited
+    def swapCell(self, event=tk.Event()):
+        if self.currentEdit:
+            self.stopEdit()
+        #gets name of label ("xy") and converts to tuple
+        name = event.widget.winfo_name()
+        self.currentEdit = (int(name[0]), int(name[1]))
+        self.cspRef.cells[self.currentEdit[0]][self.currentEdit[1]].config(bg=hexFromRgb(155,155,155))
+    
+    #updates the label based on keyboard input
+    def edit(self, event=tk.Event()):
+        key = event.keysym
+        #checks if pressed key is valid
+        if key in self.valid:
+            #clears cell
+            if key == 'BackSpace' and self.currentEdit:
+                x,y = self.currentEdit[0],self.currentEdit[1]
+                self.cspRef.cellsStrVar[x][y].set("")
+                self.cspRef.cells[x][y].config(bg=hexFromRgb(155,155,155))
+            #exits edit mode, i.e key presses wont change any cells
+            elif key == 'Return':
+                self.stopEdit()
+            #replace current cell with typed number
+            elif self.currentEdit:
+                x,y = self.currentEdit[0],self.currentEdit[1]
+                self.cspRef.cellsStrVar[x][y].set(key)
+                self.cspRef.cells[x][y].config(bg=hexFromRgb(95,95,95))
+
+    #ends edit mode
+    #sets current edit cell to none and
+    #visible removes cell highlights to show user nothing will get changed
+    def stopEdit(self):
+        key = self.currentEdit
+        cell = self.cspRef.cells[key[0]][key[1]]
+        text = cell.cget("text")
+        if text == "":
+            cell.config(bg=hexFromRgb(120,120,120))
+        else:
+            cell.config(bg=hexFromRgb(75,75,75))
+        self.currentEdit = None
+
 
 class csp():
     #constructor variables initail puzzle state is passed in
@@ -17,11 +67,13 @@ class csp():
             "orderDomainValues": 0,
             "recursiveBacktrack": 0
         }
-
+        #problem variables
         self.variables = [(i,j) for i in range(9) for j in range(9)]
         self.domains = self.makeDomains(variables)
         self.constraints = self.makeConstraints(self.variables)
+        self.solution = None
 
+        #gui Variables
         self.cells = [[0]*9 for _ in range(9)]
         self.cellsStrVar = [[tk.StringVar]*9 for _ in range(9)] #use StringVar to link label text to variable
         self.gui = self.createGui() 
@@ -34,13 +86,17 @@ class csp():
             else:
                 return (smallGap, smallGap)
 
+        #helper class used to edit the cell labels
+        #used over simple entry widgets as they dont look very nice     
+        editManager = EditLabel(self)
+
         root = tk.Tk()
         root.resizable(False, False)
         root.title("Sudoku Solver")
-        mainWindow = tk.Frame(root, height=100, width=100, bg=hexFromRgb(50,50,50))
+        mainWindow = tk.Frame(root, height=120, width=100, bg=hexFromRgb(50,50,50))
         mainWindow.grid(column=0,row=0)
 
-        titleFont = tkFont.Font(family="Comic Sans", size=20, weight="bold")
+        titleFont = tkFont.Font(family="Verdana", size=20, weight="bold")
         title = tk.Label(mainWindow, text="Sudoku Solver", bg=hexFromRgb(50,50,50), height=2, width=15, font=titleFont, foreground="White")
         title.grid(column=1, row=0, columnspan=3)
 
@@ -53,11 +109,12 @@ class csp():
                 subFrames[x][y] = tk.Frame(sudokuFrame, bg=hexFromRgb(255,255,255))
                 subFrames[x][y].grid(row=x, column=y, padx=genPadding(x), pady=genPadding(y))
 
-        cellFont = tkFont.Font(family="Comic Sans", size=12,weight="bold")
+        cellFont = tkFont.Font(family="Verdana", size=12, weight="bold")
         for i in range(9):
             for j in range(9):
                 self.cellsStrVar[i][j] = tk.StringVar(mainWindow)
-                self.cells[i][j] = tk.Label(subFrames[i//3][j//3], bg=hexFromRgb(120,120,120), width=5, height= 2, foreground="white", font=cellFont, textvariable=self.cellsStrVar[i][j])
+                self.cells[i][j] = tk.Label(subFrames[i//3][j//3], name=f"{i}{j}", bg=hexFromRgb(120,120,120), width=5, height=2, cursor="ibeam" ,foreground="white", anchor="center", font=cellFont, textvariable=self.cellsStrVar[i][j])
+                self.cells[i][j].bind("<Button-1>", editManager.swapCell)
                 
                 if len(self.domains[i,j]) == 1:
                     self.cells[i][j].config(bg=hexFromRgb(75,75,75))
@@ -65,29 +122,81 @@ class csp():
                 
                 self.cells[i][j].grid(row=i, column=j, padx=1, pady=1)
         
-        solveButton = tk.Button(mainWindow, bg="white", relief="groove", text="Solve Puzzle", height=2, width=12, command=self.showSolve)
-        solveButton.grid(row=3, column=1, columnspan=3)
+        root.bind("<Key>", editManager.edit)
+        
+        buttonFrame = tk.Frame(mainWindow, bg=hexFromRgb(50,50,50), height = 4)
+        buttonFrame.grid(row=3, column=1, columnspan = 3)
+
+        solveButton = tk.Button(buttonFrame, bg=hexFromRgb(180,180,180), relief="ridge", text="Solve Puzzle", font=cellFont, fg = hexFromRgb(25,25,25), height=2, width=12, command=self.showSolve)
+        solveButton.grid(row=1, column=1, columnspan=1, pady=2, padx=2)
+
+        clearButton = tk.Button(buttonFrame, bg=hexFromRgb(180,180,180), relief="ridge", text="Clear Puzzle", font=cellFont, fg = hexFromRgb(25,25,25), height=2, width=12, command=self.clearPuzzle)
+        clearButton.grid(row=1, column=2, columnspan=1, pady=2, padx=2)
 
         return root
 
+    #solve puzzle and show on gui
     def showSolve(self):
-        solution = self.backtrackSearch()
+        self.clearCalls()
 
-        for (i,j), val in solution.items():
+        startT = time.perf_counter_ns()
+        self.solution = self.backtrackSearch()
+        endT = time.perf_counter_ns()
+
+        for (i,j), val in self.solution.items():
             self.cellsStrVar[i][j].set(str(val))
+        
+        runtime = (endT-startT)/(1e6)
+        
+        self.printSudoku(self.solution)
+        print(f"runtime: {runtime}ms")
+        self.printCalls()
+    
+    def clearPuzzle(self):
+        for i in range(9):
+            for j in range(9):
+                if self.cells[i][j].cget("bg") != hexFromRgb(75,75,75):
+                    self.cellsStrVar[i][j].set('')
 
     
     def showGui(self):
         self.gui.mainloop()
 
-    
+    #prints some data on number of function calls
     def printCalls(self):
         for k,v in self.calls.items():
             print(f"{k}: {v}")
+    
+    #prints puzzle in terminal
+    def printSudoku(self, puzzle):
+        for i in range(9):
+            if i%3 ==0 and i !=0:
+                print("- - - - - - - - - - -")
+            for j in range(9):
+                if j%3 == 0 and j != 0:
+                    print("|", end= " ")
+                print(puzzle[i,j], end= " ")
+            print()
 
     #makes domains for each variable stored as dictionary
     #for variables that dont have an initial assignment a list of 1-9 is given
     #else domain is set to [assignment]
+    def updateDomains(self):
+        for i in range(9):
+            for j in range(9):
+                t = self.cells[i][j].cget("text")
+                if t == '':
+                    self.domains[i,j] =  {1,2,3,4,5,6,7,8,9}
+                else:
+                    self.domains[i,j] = {int(t)}
+    
+    #clears call values between solves
+    def clearCalls(self):
+        for k , _ in self.calls.items():
+            self.calls[k] = 0
+
+
+    #make domains from inital puzzle
     def makeDomains(self, variables):
         self.calls["makeDomains"] += 1
         domains = {}
@@ -159,6 +268,7 @@ class csp():
     
     #starts search 
     def backtrackSearch(self):
+        self.updateDomains()
         return self.recursiveBacktrack({})
 
     #does search
@@ -181,22 +291,7 @@ class csp():
                 assignment.pop(var)
         return None
 
-#funciton to get puzzle from user line my line
-#not required for functionality
-def getPuzzle():
-    temp = []
-
-    for i in range(9):
-        rowVals = []
-        row = input(f"values of row {i+1}: ")
-        stream = row.split(",")
-        for var in stream:
-            rowVals.append(int(var))
-        
-        temp.append(rowVals)
-    
-    return temp
-
+#converts rgb value to hexcode
 def hexFromRgb(r,g,b):
     return f'#{r:02x}{g:02x}{b:02x}'
 
@@ -248,26 +343,30 @@ def main():
         [0,8,0,0,0,0,2,0,0]
     ])
 
-    startT = time.perf_counter_ns()
+    #this commented code below will run the solver in just the terminal
 
-    #run search, returns dictionary
-    sol = problem.backtrackSearch()
+    # startT = time.perf_counter_ns()
 
-    endT = time.perf_counter_ns()
+    # #run search, returns dictionary
+    # sol = problem.backtrackSearch()
 
-    runtime = (endT-startT)/1e6
+    # endT = time.perf_counter_ns()
 
-    #convert to 2D array for easy value access
-    #also so that we dont have to destroy the dictionary to get random access
-    solution = [[0] * 9 for _ in range(9)]
-    for (i,j), val in sol.items():
-        solution[i][j] = val
+    # runtime = (endT-startT)/1e6
+
+    # #convert to 2D array for easy value access
+    # #also so that we dont have to destroy the dictionary to get random access
+    # solution = [[0] * 9 for _ in range(9)]
+    # for (i,j), val in sol.items():
+    #     solution[i][j] = val
                 
-    printSudoku(solution)
+    # printSudoku(solution)
 
-    print(f"runtime (ms): {runtime}")
-    problem.printCalls()
+    # print(f"runtime (ms): {runtime}")
+    # problem.printCalls()
 
+    
+    #if running the code above comment this to not make the gui show
     problem.showGui()
 
 
