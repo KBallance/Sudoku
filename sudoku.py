@@ -1,8 +1,7 @@
-
-#sudoku is 9x9 grid of int (0=empty)
 import time
 import tkinter as tk
 import tkinter.font as tkFont
+from argparse import ArgumentParser
 
 #class used to implements a "editable" cell label
 #handles user events to change the values of the cells
@@ -148,9 +147,11 @@ class csp():
         
         runtime = (endT-startT)/(1e6)
         
-        self.printSudoku(self.solution)
-        print(f"runtime: {runtime}ms")
-        self.printCalls()
+        #debug
+        if not args.gui or args.debug: self.printSudoku(self.solution)
+        if args.debug:
+            print(f"runtime: {runtime}ms")
+            self.printCalls()
     
     def clearPuzzle(self):
         for i in range(9):
@@ -171,10 +172,10 @@ class csp():
     def printSudoku(self, puzzle):
         for i in range(9):
             if i%3 ==0 and i !=0:
-                print("- - - - - - - - - - -")
+                print("──────┼───────┼──────")
             for j in range(9):
                 if j%3 == 0 and j != 0:
-                    print("|", end= " ")
+                    print("│", end= " ")
                 print(puzzle[i,j], end= " ")
             print()
 
@@ -306,68 +307,63 @@ def printSudoku(puzzle):
             print(puzzle[i][j], end= " ")
         print()
 
+#check file arg is .txt or .csv (case insensitive)
+def isFileType(string:str):
+    try:
+        s = string.rsplit(".", 1)[1].lower()
+        if len(s) > 0 and s in ["txt", "csv"]:
+            return string
+        else:
+            raise TypeError
+    except Exception as e:
+        raise
 
-def main():
-    #create csp object, passing initial state 
+#create parser for command line args
+parser = ArgumentParser(
+    prog="Sudoku Solver",
+    description="Solves a 9x9 sudoku puzzle using brute-force method."
+)
+parser.add_argument(#positional (required)
+    "filename",
+    type=isFileType,
+    help="File path to .txt or .csv file containing 9x9 puzzle."
+)
+parser.add_argument(#flag (optional)
+    "-d", "--debug",
+    action="store_true",
+    help="Print debug output to terminal."
+)
+parser.add_argument(#flag (optional)
+    "-g", "--gui",
+    action="store_true",
+    help="Show graphical interface."
+)
 
-    # problem = csp([[7,0,0,0,9,2,0,5,0],
-    #            [0,3,0,1,7,5,6,0,0],
-    #            [9,0,1,8,4,0,2,7,0],
-    #            [3,7,0,0,5,0,0,1,0],
-    #            [5,4,0,9,0,0,7,3,6],
-    #            [0,6,0,0,0,0,0,0,5],
-    #            [6,2,0,7,0,9,0,4,8],
-    #            [8,1,0,0,0,0,9,0,0],
-    #            [0,0,7,2,0,0,5,0,1]])
-        
-    # problem = csp([[0,0,0,0,0,0,0,0,0],
-    #                [0,0,0,0,0,0,0,0,0],
-    #                [0,0,0,0,0,0,0,0,0],
-    #                [0,0,0,0,0,0,0,0,0],
-    #                [0,0,0,0,0,0,0,0,0],
-    #                [0,0,0,0,0,0,0,0,0],
-    #                [0,0,0,0,0,0,0,0,0],
-    #                [0,0,0,0,0,0,0,0,0],
-    #                [0,0,0,0,0,0,0,0,0]])
+#read txt/csv into csp
+def readPuzzle(filename):
+    fileType = filename[-3:].lower()
+    vars = []
 
-    # hard from telegram
-    problem = csp([
-        [7,0,0,8,0,0,4,0,1],
-        [0,0,9,0,5,0,0,0,0],
-        [0,0,0,0,0,0,0,9,0],
-        [0,0,0,0,2,0,3,0,0],
-        [0,1,0,4,0,0,0,6,0],
-        [6,4,0,0,7,8,0,0,0],
-        [0,0,0,0,0,0,0,5,0],
-        [0,3,0,2,0,7,8,0,0],
-        [0,8,0,0,0,0,2,0,0]
-    ])
-
-    #this commented code below will run the solver in just the terminal
-
-    # startT = time.perf_counter_ns()
-
-    # #run search, returns dictionary
-    # sol = problem.backtrackSearch()
-
-    # endT = time.perf_counter_ns()
-
-    # runtime = (endT-startT)/1e6
-
-    # #convert to 2D array for easy value access
-    # #also so that we dont have to destroy the dictionary to get random access
-    # solution = [[0] * 9 for _ in range(9)]
-    # for (i,j), val in sol.items():
-    #     solution[i][j] = val
-                
-    # printSudoku(solution)
-
-    # print(f"runtime (ms): {runtime}")
-    # problem.printCalls()
-
+    #open file & convert contents into 2d array
+    with open(filename, "r") as file:
+        if fileType == "txt":
+            vars = [[int(v) for v in line.strip().split(" ")] for line in file.readlines()]
+        elif fileType == "csv":
+            vars = [[int(v) for v in line.strip(" ,\n\r\t\f").split(",")] for line in file.readlines()]
+        else:
+            raise Exception("Somehow invalid file type?")
     
-    #if running the code above comment this to not make the gui show
-    problem.showGui()
+    #check puzzle has valid no. cells
+    if [len(x) for x in vars].count(9) != 9:
+        raise Exception("Invalid puzzle.")
 
+    return csp(vars)
 
-main()
+if __name__ == "__main__":
+    args = parser.parse_args() #get args from command line
+
+    problem = readPuzzle(args.filename)
+    if args.gui:
+        problem.showGui()
+    else:
+        problem.showSolve()
