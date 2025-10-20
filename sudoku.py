@@ -154,6 +154,11 @@ class csp():
         self.solution = self.backtrackSearch()
         runtime = (time.perf_counter_ns()-startT)/1e6
 
+        #skip rest if no solution was found
+        if self.solution is None:
+            print("No solution")
+            return
+
         #update gui cells
         if args.gui:
             for (i,j), val in self.solution.items():
