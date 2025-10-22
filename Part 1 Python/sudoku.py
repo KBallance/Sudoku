@@ -199,7 +199,7 @@ class csp():
 
     #makes domains for each variable stored as dictionary
     #for variables that dont have an initial assignment a list of 1-9 is given
-    #else domain is set to [assignment]
+    #else domain is set to {assignment}
     def updateDomains(self):
         for i in range(9):
             for j in range(9):
@@ -215,22 +215,22 @@ class csp():
             self.calls[k] = 0
 
     #make domains from inital puzzle
-    def makeDomains(self, variables):
+    def makeDomains(self, values):
         self.calls["makeDomains"] += 1
         domains = {}
         for x in range(9):
             for y in range(9):
-                if variables[x][y] != 0:
-                    domains[(x,y)] = [variables[x][y]]
+                if values[x][y] != 0:
+                    domains[(x,y)] = [values[x][y]]
                 else:
                     domains[(x,y)] = [*range(1,10)]
         return domains
     
     #makes constraints for each value stored in dictionary
-    def makeConstraints(self, variables):
+    def makeConstraints(self, values):
         self.calls["makeConstraints"] += 1
         constraints = {}
-        for var in variables:
+        for var in values:
             constraint = []
             for i in range(9):
                 #rows cant equal
@@ -251,7 +251,7 @@ class csp():
         return constraints
     
     #select next variable that has not been given an asignment yet
-    def selectUnasignedVar(self, assignment):
+    def selectUnassignedVar(self, assignment):
         self.calls["selectUnasignedVar"] += 1
         unassignedVar = []
         for var in self.variables: 
@@ -259,6 +259,7 @@ class csp():
                 unassignedVar.append(var)
         #set min dom var to first
         curMin = unassignedVar[0]
+
         for var1 in unassignedVar:
             #return var instantly if domain length 1
             if len(self.domains[var1]) == 1:
@@ -268,7 +269,6 @@ class csp():
                 if len(self.domains[var1]) < len(self.domains[curMin]):
                     curMin = var1
         return curMin
-
 
     #checks if value assigned conforms to teh variables constraints
     def isConsistent(self, var, value, assignment):
@@ -287,6 +287,16 @@ class csp():
     def backtrackSearch(self):
         self.updateDomains()
         return self.recursiveBacktrack({})
+    
+
+    #update domains dynamically for arc consistency
+    def removeDom(self, var, val):
+        for constraint in self.constraints[var]:
+            self.domains[constraint] = self.domains[constraint] - {val}
+    
+    def addDom(self, var, val):
+        for constraint in self.constraints[var]:
+            self.domains[constraint] = self.domains[constraint] | {val}
 
     #does search
     def recursiveBacktrack(self, assignment):
@@ -296,16 +306,18 @@ class csp():
             return assignment
         
         #gets next var
-        var = self.selectUnasignedVar(assignment)
+        var = self.selectUnassignedVar(assignment)
 
         #gets first val that conforms to constraints else returns fail(None) as we want to return a complete puzzle not a success or fail
         for val in self.orderDomainValues(var):
             if self.isConsistent(var, val, assignment):
                 assignment[var] = val
+                self.removeDom(var,val)
                 result = self.recursiveBacktrack(assignment)
                 if result is not None:
                     return result
                 assignment.pop(var)
+                self.addDom(var, val)
         return None
 
 #converts rgb value to hexcode
@@ -326,7 +338,7 @@ def isFileType(string:str):
 #create parser for command line args
 parser = ArgumentParser(
     prog="Sudoku Solver",
-    description="Solves a 9x9 sudoku puzzle using brute-force method."
+    description="Solves a 9x9 sudoku puzzle using backtrack search with forward checking"
 )
 parser.add_argument(#positional (required)
     "filename",
@@ -356,7 +368,7 @@ def readPuzzle(filename):
         elif fileType == "csv":
             vars = [[int(v) for v in line.strip(" ,\n\r\t\f").split(",")] for line in file.readlines()]
         else:
-            raise Exception("Somehow invalid file type?")
+            raise Exception("Invalid file type?")
     
     #check puzzle has valid no. cells
     if [len(x) for x in vars].count(9) != 9:
