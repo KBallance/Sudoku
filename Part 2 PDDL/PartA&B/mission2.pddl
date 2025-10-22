@@ -27,9 +27,9 @@
 
         ;landers
         (landed l1)
-        (located l1 wp2)
         (commands l1 r1)
         (storeEmpty l1)
+        (located l1 wp2)
 
         (flying l2)
         (carrying l2 r2)
@@ -38,13 +38,13 @@
 
         ;rovers
         (deployed r1)
-        (located r1 wp2)
-        (memEmpty r1)
         (storeEmpty r1)
+        (memEmpty r1)
+        (located r1 wp2)
 
         (undeployed r2)
-        (memEmpty r2)
         (storeEmpty r2)
+        (memEmpty r2)
 
         ;points of interest
         (located img1 wp3)

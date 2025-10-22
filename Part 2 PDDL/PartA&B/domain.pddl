@@ -32,7 +32,7 @@
         (path ?l1 - location ?l2 - location); path exists between 1 & 2
         (located ?x - object ?l - location) ; object is in this location
         
-        (heldSample ?v - vehicle ?s - sample); sample held in vehicle storage
+        (heldSample ?v - vehicle ?sa - sample); sample held in vehicle storage
         (storeEmpty ?v - vehicle)
         ; (storeFull ?v - vehicle); vehicle holding physical sample
 
@@ -138,7 +138,7 @@
             (transmitted ?d)
         )
     )
-    
+
     (:action collect_sample; rover collects sample from location
         :parameters (?r - rover ?l - location ?sa - sample)
         :precondition (and
@@ -153,8 +153,7 @@
             (not (storeEmpty ?r))
             (not (located ?sa ?l)); assumed sample can only be collected once
         )
-    )
-    
+    )    
 
     (:action deposit_sample; put sample from rover into lander
         :parameters (?r - rover ?l - lander ?lo - location ?sa - sample)
@@ -180,4 +179,49 @@
             (sampleDeposited ?sa)
         )
     )
+
+    ; (:action collect_sample
+    ;     :parameters (?r - rover ?l - location ?sa - sample)
+    ;     :precondition (and
+    ;         (deployed ?r)
+    ;         (located ?r ?l)
+    ;         (storeEmpty ?r)
+            
+    ;         (located ?sa ?l)
+    ;     )
+    ;     :effect (and
+    ;         (not (storeEmpty ?r))
+    ;         (storeFull ?r)
+
+    ;         (heldSample ?r ?sa)
+
+    ;         (not (located ?sa ?l))
+    ;     )
+    ; )
+    
+    ; (:action deposit_sample
+    ;     :parameters (?r - rover ?l - lander ?lo - location ?sa - sample)
+    ;     :precondition (and
+    ;         (deployed ?r)
+    ;         (located ?r ?lo)
+    ;         (storeFull ?r)
+
+    ;         (landed ?l)
+    ;         (located ?l ?lo)
+    ;         (storeEmpty ?l)
+
+    ;         (commands ?l ?r)
+    ;     )
+    ;     :effect (and
+    ;         (not (storeFull ?r))
+    ;         (storeEmpty ?r)
+    ;         (not (heldSample ?r ?sa))
+
+    ;         (not (storeEmpty ?l))
+    ;         (storeFull ?l)
+    ;         (heldSample ?l ?sa)
+
+    ;         (sampleDeposited ?sa)
+    ;     )
+    ; )
 )
