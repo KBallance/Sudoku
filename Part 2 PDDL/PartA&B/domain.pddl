@@ -5,15 +5,15 @@
     ; Types
     ; -------------------------------
     (:types
-        vehicle
+        vehicle - object
         lander rover - vehicle
 
-        location
+        location - object
 
-        data
+        data - object
         image scan - data
 
-        sample
+        sample - object
     )
 
     ; -------------------------------
@@ -22,18 +22,21 @@
     (:predicates
         (flying ?l - lander)
         (landed ?l - lander); lander stationary
+        
         (carrying ?l - lander ?r - rover); lander is carrying certain rover
+        (commands ?l - lander ?r - rover);lander commands a rover (they are connected)
+
         (undeployed ?r - rover)
         (deployed ?r - rover); rover ready
         (path ?l1 - location ?l2 - location); path exists between 1 & 2
-        (located ?x ?l - location) ; object is in this location
+        (located ?x - object ?l - location) ; object is in this location
         
         (heldSample ?v - vehicle ?s - sample); sample held in vehicle storage
         (storeEmpty ?v - vehicle)
         (storeFull ?v - vehicle); vehicle holding physical sample
 
         (memEmpty ?r - rover)
-        (memFull ?r - rover); is rover holding data in memory
+        ;(memFull ?r - rover); is rover holding data in memory
         (heldData ?v - vehicle ?d - data); data stored in vehicle memory
     )
 
@@ -47,6 +50,7 @@
         )
         :effect (and
             (landed ?l)
+            (not (flying ?l))
             (located ?l ?lo)
         )
     )
@@ -56,9 +60,12 @@
         :precondition (and
             (landed ?l)
             (carrying ?l ?r)
+            (commands ?l ?r)
             (undeployed ?r)
+            (located ?l ?lo)
         )
         :effect (and
+            (not (undeployed ?r))
             (not (carrying ?l ?r))
             (deployed ?r)
             (located ?r ?lo)
@@ -83,11 +90,13 @@
         :precondition (and
             (located ?r ?l)
             (located ?i ?l)
+            (deployed ?r)
             (memEmpty ?r)
         )
         :effect (and
             (heldData ?r ?i)
-            (memFull ?r)
+            ;(memFull ?r)
+            (not (memEmpty ?r))
             (not (located ?i ?l)); assumed data can only be collected once
         )
     )
@@ -97,11 +106,13 @@
         :precondition (and
             (located ?r ?l)
             (located ?s ?l)
+            (deployed ?r)
             (memEmpty ?r)
         )
         :effect (and
             (heldData ?r ?s)
-            (memFull ?r)
+            (not (memEmpty ?r))
+            ;(memFull ?r)
             (not (located ?s ?l)); assumed data can only be collected once
         )
     )
@@ -109,12 +120,15 @@
     (:action transmit_data; rover transmits held data to a lander
         :parameters (?r - rover ?l - lander ?d - data)
         :precondition (and
-            (memFull ?r)
+            ;(memFull ?r)
+            (commands ?l ?r)
+            (heldData ?r ?d)
+            (deployed ?r)
         )
         :effect (and
             (not (heldData ?r ?d))
             (memEmpty ?r)
-            
+            ;(not (memFull ?r))
             (heldData ?l ?d)
         )
     )
@@ -128,7 +142,8 @@
         )
         :effect (and
             (heldSample ?r ?s)
-            (storeFull ?r)
+            ;(storeFull ?r)
+            (not (storeEmpty ?r))
             (not (located ?s ?l)); assumed sample can only be collected once
         )
     )
@@ -139,14 +154,16 @@
         :precondition (and
             (located ?r ?lo)
             (located ?l ?lo)
-            (storeFull ?r)
+            ;(storeFull ?r)
+            (heldSample ?r ?s)
             (storeEmpty ?l)
         )
         :effect (and
             (not (heldSample ?r ?s))
             (storeEmpty ?r)
-
+            ;(not (storeFull ?r))
             (heldSample ?l ?s)
+            (not (storeEmpty ?l))
             (storeFull ?l)
         )
     )

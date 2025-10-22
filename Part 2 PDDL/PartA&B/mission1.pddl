@@ -5,10 +5,10 @@
         l - lander
         r - rover
 
-        l1 l2 l3 l4 l5 - location
+        wp1 wp2 wp3 wp4 wp5 - location
 
-        d1 - image
-        d2 - scan
+        img - image
+        scan - scan
         
         s1 - sample
     )
@@ -17,6 +17,7 @@
         ;start config
         (flying l)
         (carrying l r)
+        (commands l r)
         (storeEmpty l)
         
         (undeployed r)
@@ -24,23 +25,24 @@
         (memEmpty r)
 
         ;map
-        (path l1 l2)
-        (path l1 l4)
-        (path l2 l3)
-        (path l3 l5)
-        (path l4 l3)
-        (path l5 l1)
+        (path wp1 wp2)
+        (path wp1 wp4)
+        (path wp2 wp3)
+        (path wp3 wp5)
+        (path wp4 wp3)
+        (path wp5 wp1)
+        
         ;points of interest
-        (located d1 l5)
-        (located d2 l3)
-        (located s1 l1)
+        (located img wp5) ;image POI located at wp5
+        (located scan wp3) ;scan POI located at wp3
+        (located s1 wp1) ;sample located at wp1
     )
 
     (:goal
         (and
-            (heldData d1 l)
-            (heldData d2 l)
-            (heldSample s1 l)
+            (heldData l img) ;image saved in lander
+            (heldData l scan) ; scan saved in lander
+            (heldSample l s1) ; sample stored in lander
         )
     )
 )
