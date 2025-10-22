@@ -20,24 +20,28 @@
     ; Predicates
     ; -------------------------------
     (:predicates
-        (flying ?l - lander)
+        (flying ?l - lander); lander in flight
         (landed ?l - lander); lander stationary
         
         (carrying ?l - lander ?r - rover); lander is carrying certain rover
         (commands ?l - lander ?r - rover);lander commands a rover (they are connected)
 
-        (undeployed ?r - rover)
+        (undeployed ?r - rover); rover not ready
         (deployed ?r - rover); rover ready
+
         (path ?l1 - location ?l2 - location); path exists between 1 & 2
         (located ?x - object ?l - location) ; object is in this location
         
         (heldSample ?v - vehicle ?s - sample); sample held in vehicle storage
         (storeEmpty ?v - vehicle)
-        (storeFull ?v - vehicle); vehicle holding physical sample
+        ; (storeFull ?v - vehicle); vehicle holding physical sample
 
         (memEmpty ?r - rover)
         ;(memFull ?r - rover); is rover holding data in memory
         (heldData ?v - vehicle ?d - data); data stored in vehicle memory
+
+        (transmitted ?d - data); img/scan has be transmitted to a lander
+        (sampleDeposited ?s - sample); sample has been deposited in a lander
     )
 
     ; -------------------------------
@@ -66,8 +70,8 @@
         )
         :effect (and
             (not (undeployed ?r))
-            (not (carrying ?l ?r))
             (deployed ?r)
+            (not (carrying ?l ?r))
             (located ?r ?lo)
         )
     )
@@ -88,9 +92,9 @@
     (:action capture_image; rover takes image at location & stores data in memory
         :parameters (?r - rover ?l - location ?i - image)
         :precondition (and
+            (deployed ?r)
             (located ?r ?l)
             (located ?i ?l)
-            (deployed ?r)
             (memEmpty ?r)
         )
         :effect (and
@@ -104,9 +108,9 @@
     (:action scan_radar; rover takes scan at location & stores data in memory
         :parameters (?r - rover ?l - location ?s - scan)
         :precondition (and
+            (deployed ?r)
             (located ?r ?l)
             (located ?s ?l)
-            (deployed ?r)
             (memEmpty ?r)
         )
         :effect (and
@@ -120,51 +124,59 @@
     (:action transmit_data; rover transmits held data to a lander
         :parameters (?r - rover ?l - lander ?d - data)
         :precondition (and
+            (deployed ?r)
             ;(memFull ?r)
             (commands ?l ?r)
             (heldData ?r ?d)
-            (deployed ?r)
         )
         :effect (and
             (not (heldData ?r ?d))
             (memEmpty ?r)
             ;(not (memFull ?r))
             (heldData ?l ?d)
+            
+            (transmitted ?d)
         )
     )
-
+    
     (:action collect_sample; rover collects sample from location
-        :parameters (?r - rover ?l - location ?s - sample)
+        :parameters (?r - rover ?l - location ?sa - sample)
         :precondition (and
+            (deployed r)
             (located ?r ?l)
             (located ?s ?l)
             (storeEmpty ?r)
         )
         :effect (and
-            (heldSample ?r ?s)
-            ;(storeFull ?r)
+            (heldSample ?r ?sa)
+            ; (storeFull ?r)
             (not (storeEmpty ?r))
-            (not (located ?s ?l)); assumed sample can only be collected once
+            (not (located ?sa ?l)); assumed sample can only be collected once
         )
     )
     
 
     (:action deposit_sample; put sample from rover into lander
-        :parameters (?r - rover ?l - lander ?lo - location ?s - sample)
+        :parameters (?r - rover ?l - lander ?lo - location ?sa - sample)
         :precondition (and
+            (deployed r)
+            (landed l)
             (located ?r ?lo)
             (located ?l ?lo)
-            ;(storeFull ?r)
-            (heldSample ?r ?s)
+            ; (storeFull ?r)
+            (heldSample ?r ?sa)
             (storeEmpty ?l)
         )
         :effect (and
-            (not (heldSample ?r ?s))
+            (not (heldSample ?r ?sa))
             (storeEmpty ?r)
-            ;(not (storeFull ?r))
-            (heldSample ?l ?s)
+            ; (not (storeFull ?r))
+
+            (heldSample ?l ?sa)
+            ; (storeFull ?l)
             (not (storeEmpty ?l))
-            (storeFull ?l)
+            
+            (sampleDeposited ?sa)
         )
     )
 )

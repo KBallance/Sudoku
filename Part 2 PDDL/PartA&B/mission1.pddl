@@ -10,7 +10,7 @@
         img - image
         scan - scan
         
-        s1 - sample
+        smpl1 - sample
     )
 
     (:init
@@ -35,14 +35,18 @@
         ;points of interest
         (located img wp5) ;image POI located at wp5
         (located scan wp3) ;scan POI located at wp3
-        (located s1 wp1) ;sample located at wp1
+        (located smpl1 wp1) ;sample located at wp1
     )
 
     (:goal
         (and
-            (heldData l img) ;image saved in lander
-            (heldData l scan) ; scan saved in lander
-            (heldSample l s1) ; sample stored in lander
+            ; (heldData l img) ;image saved in lander
+            ; (heldData l scan) ; scan saved in lander
+            ; (heldSample l s1) ; sample stored in lander
+            (transmitted img)
+            (transmitted scan)
+            ; (sampleDeposited smpl1)
+            (heldSample r smpl)
         )
     )
 )
