@@ -34,7 +34,7 @@
         (flying l2)
         (carrying l2 r2)
         (commands l2 r2)
-        (storeEmpty l1)
+        (storeEmpty l2)
 
         ;rovers
         (deployed r1)
@@ -57,17 +57,14 @@
 
     (:goal
         (and
-            ;ensure it uses all rovers
-            (deployed r1)
-            (deployed r2)
             ;all data transmitted to landers
             (transmitted img1)
             (transmitted img2)
             (transmitted scan1)
             (transmitted scan2)
             ;all samples collected
-            ; (sampleDeposited smpl1)
-            ; (sampleDeposited smpl2)
+            (sampleDeposited smpl1)
+            (sampleDeposited smpl2)
         )
     )
 )

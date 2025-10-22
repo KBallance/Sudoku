@@ -142,9 +142,9 @@
     (:action collect_sample; rover collects sample from location
         :parameters (?r - rover ?l - location ?sa - sample)
         :precondition (and
-            (deployed r)
+            (deployed ?r)
             (located ?r ?l)
-            (located ?s ?l)
+            (located ?sa ?l)
             (storeEmpty ?r)
         )
         :effect (and
@@ -159,10 +159,11 @@
     (:action deposit_sample; put sample from rover into lander
         :parameters (?r - rover ?l - lander ?lo - location ?sa - sample)
         :precondition (and
-            (deployed r)
-            (landed l)
+            (deployed ?r)
+            (landed ?l)
             (located ?r ?lo)
             (located ?l ?lo)
+            (commands ?l ?r)
             ; (storeFull ?r)
             (heldSample ?r ?sa)
             (storeEmpty ?l)
