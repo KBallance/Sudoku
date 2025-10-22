@@ -289,7 +289,7 @@ class csp():
         return self.recursiveBacktrack({})
     
 
-    #update domains dynamically for arc consistency
+    #update domains dynamically for forward checking
     def removeDom(self, var, val):
         for constraint in self.constraints[var]:
             self.domains[constraint] = self.domains[constraint] - {val}
