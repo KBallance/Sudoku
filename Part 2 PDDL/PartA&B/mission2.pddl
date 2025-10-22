@@ -27,24 +27,25 @@
 
         ;landers
         (landed l1)
-        (located l1 wp2)
+        (not (carrying l1 r1))
         (commands l1 r1)
         (storeEmpty l1)
+        (located l1 wp2)
 
         (flying l2)
         (carrying l2 r2)
         (commands l2 r2)
-        (storeEmpty l1)
+        (storeEmpty l2)
 
         ;rovers
         (deployed r1)
-        (located r1 wp2)
-        (memEmpty r1)
         (storeEmpty r1)
+        (memEmpty r1)
+        (located r1 wp2)
 
         (undeployed r2)
-        (memEmpty r2)
         (storeEmpty r2)
+        (memEmpty r2)
 
         ;points of interest
         (located img1 wp3)
@@ -58,8 +59,8 @@
     (:goal
         (and
             ;ensure it uses all rovers
-            (deployed r1)
-            (deployed r2)
+            ; (deployed r1)
+            ; (deployed r2)
             ;all data transmitted to landers
             (transmitted img1)
             (transmitted img2)

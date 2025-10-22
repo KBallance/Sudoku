@@ -40,13 +40,9 @@
 
     (:goal
         (and
-            ; (heldData l img) ;image saved in lander
-            ; (heldData l scan) ; scan saved in lander
-            ; (heldSample l s1) ; sample stored in lander
             (transmitted img)
             (transmitted scan)
-            ; (sampleDeposited smpl1)
-            (heldSample r smpl)
+            (sampleDeposited smpl1)
         )
     )
 )
