@@ -62,6 +62,7 @@
             (transmitted img2)
             (transmitted scan1)
             (transmitted scan2)
+            
             ;all samples collected
             (sampleDeposited smpl1)
             (sampleDeposited smpl2)

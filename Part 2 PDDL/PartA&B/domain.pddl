@@ -33,14 +33,12 @@
         (located ?x - object ?l - location) ; object is in this location
         
         (heldSample ?v - vehicle ?sa - sample); sample held in vehicle storage
-        (storeEmpty ?v - vehicle)
-        ; (storeFull ?v - vehicle); vehicle holding physical sample
+        (storeEmpty ?v - vehicle); rover not holding sample
 
-        (memEmpty ?r - rover)
-        ;(memFull ?r - rover); is rover holding data in memory
+        (memEmpty ?v - vehicle); vehicle not holding data
         (heldData ?v - vehicle ?d - data); data stored in vehicle memory
 
-        (transmitted ?d - data); img/scan has be transmitted to a lander
+        (transmitted ?d - data); img/scan has been transmitted to a lander
         (sampleDeposited ?s - sample); sample has been deposited in a lander
     )
 
@@ -65,13 +63,14 @@
             (landed ?l)
             (carrying ?l ?r)
             (commands ?l ?r)
-            (undeployed ?r)
             (located ?l ?lo)
+            (undeployed ?r)
         )
         :effect (and
+            (not (carrying ?l ?r))
+
             (not (undeployed ?r))
             (deployed ?r)
-            (not (carrying ?l ?r))
             (located ?r ?lo)
         )
     )
@@ -99,8 +98,8 @@
         )
         :effect (and
             (heldData ?r ?i)
-            ;(memFull ?r)
             (not (memEmpty ?r))
+
             (not (located ?i ?l)); assumed data can only be collected once
         )
     )
@@ -116,23 +115,23 @@
         :effect (and
             (heldData ?r ?s)
             (not (memEmpty ?r))
-            ;(memFull ?r)
+
             (not (located ?s ?l)); assumed data can only be collected once
         )
     )
 
-    (:action transmit_data; rover transmits held data to a lander
+    (:action transmit_data; rover transmits held data to its lander
         :parameters (?r - rover ?l - lander ?d - data)
         :precondition (and
-            (deployed ?r)
-            ;(memFull ?r)
             (commands ?l ?r)
+
+            (deployed ?r)
             (heldData ?r ?d)
         )
         :effect (and
             (not (heldData ?r ?d))
             (memEmpty ?r)
-            ;(not (memFull ?r))
+
             (heldData ?l ?d)
             
             (transmitted ?d)
@@ -149,79 +148,32 @@
         )
         :effect (and
             (heldSample ?r ?sa)
-            ; (storeFull ?r)
             (not (storeEmpty ?r))
+
             (not (located ?sa ?l)); assumed sample can only be collected once
         )
-    )    
+    )
 
-    (:action deposit_sample; put sample from rover into lander
+    (:action deposit_sample; put sample from rover into its lander
         :parameters (?r - rover ?l - lander ?lo - location ?sa - sample)
         :precondition (and
-            (deployed ?r)
             (landed ?l)
-            (located ?r ?lo)
             (located ?l ?lo)
             (commands ?l ?r)
-            ; (storeFull ?r)
-            (heldSample ?r ?sa)
             (storeEmpty ?l)
+
+            (deployed ?r)
+            (located ?r ?lo)
+            (heldSample ?r ?sa)
         )
         :effect (and
             (not (heldSample ?r ?sa))
             (storeEmpty ?r)
-            ; (not (storeFull ?r))
 
             (heldSample ?l ?sa)
-            ; (storeFull ?l)
             (not (storeEmpty ?l))
             
             (sampleDeposited ?sa)
         )
     )
-
-    ; (:action collect_sample
-    ;     :parameters (?r - rover ?l - location ?sa - sample)
-    ;     :precondition (and
-    ;         (deployed ?r)
-    ;         (located ?r ?l)
-    ;         (storeEmpty ?r)
-            
-    ;         (located ?sa ?l)
-    ;     )
-    ;     :effect (and
-    ;         (not (storeEmpty ?r))
-    ;         (storeFull ?r)
-
-    ;         (heldSample ?r ?sa)
-
-    ;         (not (located ?sa ?l))
-    ;     )
-    ; )
-    
-    ; (:action deposit_sample
-    ;     :parameters (?r - rover ?l - lander ?lo - location ?sa - sample)
-    ;     :precondition (and
-    ;         (deployed ?r)
-    ;         (located ?r ?lo)
-    ;         (storeFull ?r)
-
-    ;         (landed ?l)
-    ;         (located ?l ?lo)
-    ;         (storeEmpty ?l)
-
-    ;         (commands ?l ?r)
-    ;     )
-    ;     :effect (and
-    ;         (not (storeFull ?r))
-    ;         (storeEmpty ?r)
-    ;         (not (heldSample ?r ?sa))
-
-    ;         (not (storeEmpty ?l))
-    ;         (storeFull ?l)
-    ;         (heldSample ?l ?sa)
-
-    ;         (sampleDeposited ?sa)
-    ;     )
-    ; )
 )
